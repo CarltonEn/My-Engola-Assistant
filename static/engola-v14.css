@@ -1,0 +1,19 @@
+/* Engola v0.14 Research + Knowledge UI */
+#research.page{max-width:1240px}
+.v14ResearchGrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:14px}
+.v14Panel{border-radius:22px;padding:20px}
+.v14Panel h3{margin:0 0 6px;font-size:15px}
+.v14Panel p.v14muted{margin:0 0 16px;color:#999;font-size:11px;line-height:1.6}
+.v14Form{display:grid;gap:10px}
+.v14Row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.v14Input{width:100%;border:1px solid var(--line);background:rgba(0,0,0,.22);color:#eee;border-radius:12px;padding:11px;outline:none}
+.v14Textarea{min-height:80px;resize:vertical}
+.v14Result{border:1px solid var(--line2);background:var(--surface3);border-radius:14px;padding:12px;margin-top:8px}
+.v14Result b{font-size:12px}.v14Result small{display:block;color:#999;font-size:10px;line-height:1.55;margin-top:4px}
+.v14Meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.v14Status{min-height:18px;color:#aaa;font-size:10px}
+.v14Status.good{color:var(--good)}.v14Status.bad{color:var(--bad)}
+.v14SourceText{max-height:260px;overflow:auto;white-space:pre-wrap;color:#bbb;font-size:11px;line-height:1.65;margin-top:10px;padding:10px;border:1px solid var(--line2);border-radius:12px;background:rgba(0,0,0,.16)}
+.v14Wiki a{color:#eee;text-decoration:none}.v14Wiki a:hover{text-decoration:underline}
+.v14Video{aspect-ratio:16/9;width:100%;border:0;border-radius:16px;background:#000;margin-top:10px}
+@media(max-width:900px){.v14ResearchGrid{grid-template-columns:1fr}.v14Panel{padding:16px}}

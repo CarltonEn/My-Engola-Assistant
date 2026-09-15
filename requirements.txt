@@ -1,0 +1,9 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+openai==1.101.0
+python-dotenv==1.1.1
+webauthn==2.2.0
+pypdf==6.18.0
+youtube-transcript-api==1.2.0
+edge-tts==7.2.8
+python-multipart==0.0.20

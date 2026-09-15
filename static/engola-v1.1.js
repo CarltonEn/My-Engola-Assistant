@@ -1,0 +1,1 @@
+(()=>{const s=document.getElementById('e-status');async function pulse(){try{const r=await fetch('/api/integrations/status',{credentials:'same-origin'});if(!r.ok)return;const d=await r.json();if(s)s.textContent=`Core online · ${d.google?.connected?'Google ✓':'Google —'} · ${d.github?.connected?'GitHub ✓':'GitHub —'}`}catch{}}pulse();setInterval(pulse,30000)})();

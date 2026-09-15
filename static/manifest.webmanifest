@@ -1,0 +1,9 @@
+{
+  "name": "Engola — Private AI Chief of Staff",
+  "short_name": "Engola",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090909",
+  "theme_color": "#090909",
+  "description": "Owner-authenticated personal AI operating system for Engola Innocent."
+}

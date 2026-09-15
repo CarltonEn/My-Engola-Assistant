@@ -1,0 +1,14 @@
+/* Engola v0.17 — living command-centre layer */
+:root{--e17-glow:rgba(190,235,255,.22);--e17-glow2:rgba(170,130,255,.16)}
+#engola-live-core{position:fixed;right:22px;bottom:88px;z-index:30;width:74px;height:74px;border-radius:50%;display:grid;place-items:center;pointer-events:none}
+#engola-live-core .e17-orb{width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.32);background:radial-gradient(circle at 35% 30%,#fff,rgba(210,240,255,.38) 18%,rgba(120,170,255,.13) 48%,transparent 72%);box-shadow:0 0 24px var(--e17-glow),0 0 70px var(--e17-glow2);animation:e17breathe 3.8s ease-in-out infinite}
+#engola-live-core .e17-ring{position:absolute;inset:4px;border:1px solid rgba(255,255,255,.12);border-radius:50%;animation:e17spin 12s linear infinite}
+#engola-live-core .e17-ring:after{content:"";position:absolute;left:50%;top:-3px;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 12px #fff}
+.e17-live-banner{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:11px 14px;border-radius:16px;background:linear-gradient(100deg,rgba(255,255,255,.075),rgba(160,190,255,.035));border:1px solid rgba(255,255,255,.09);color:#aaa;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.e17-live-dot{width:7px;height:7px;border-radius:50%;background:#b8f3cf;box-shadow:0 0 14px #b8f3cf;animation:e17pulse 2s infinite}
+.e17-voice-btn{margin-left:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#bbb;border-radius:999px;padding:5px 8px;font-size:9px;cursor:pointer}
+.e17-voice-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
+@keyframes e17breathe{0%,100%{transform:scale(.94);opacity:.78}50%{transform:scale(1.06);opacity:1}}
+@keyframes e17pulse{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes e17spin{to{transform:rotate(360deg)}}
+@media(max-width:900px){#engola-live-core{right:12px;bottom:76px;transform:scale(.84)}.e17-live-banner{font-size:9px}}

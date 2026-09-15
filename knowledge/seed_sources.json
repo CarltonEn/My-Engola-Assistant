@@ -1,0 +1,11 @@
+[
+  {"title":"Uganda Tax Procedures Code Act — ULII current version","url":"https://ulii.org/en/akn/ug/act/2014/14/eng@2025-07-01","category":"uganda-tax","authority":"primary-law"},
+  {"title":"Uganda Revenue Authority — EFRIS","url":"https://ura.go.ug/en/efris/","category":"uganda-tax","authority":"official-guidance"},
+  {"title":"Uganda Revenue Authority — VAT","url":"https://ura.go.ug/en/value-added-tax-vat/","category":"uganda-tax","authority":"official-guidance"},
+  {"title":"Uganda Revenue Authority — Tax Returns","url":"https://ura.go.ug/en/domestic-taxes/returns/?pfstyle=wp","category":"uganda-tax","authority":"official-guidance"},
+  {"title":"ICPAU — Legal & Regulatory Technical Resources","url":"https://www.icpau.co.ug/resources/technical-resources/legal-regulatory","category":"accounting","authority":"professional-body"},
+  {"title":"Python Documentation","url":"https://docs.python.org/3/","category":"technology","authority":"official-documentation"},
+  {"title":"FastAPI Documentation","url":"https://fastapi.tiangolo.com/","category":"technology","authority":"official-documentation"},
+  {"title":"MDN Web Docs","url":"https://developer.mozilla.org/en-US/","category":"technology","authority":"official-documentation"},
+  {"title":"OWASP Cheat Sheet Series","url":"https://cheatsheetseries.owasp.org/","category":"cybersecurity","authority":"authoritative-guidance"}
+]

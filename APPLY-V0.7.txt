@@ -1,0 +1,18 @@
+Engola v0.7 functional-core patch
+
+This patch is based on canonical commit 2c6555b.
+Changed:
+- Adds persistent /api/work/tasks CRUD backed by SQLite.
+- Adds GET/DELETE memory management endpoints.
+- Makes Intelligence, Work, Memory and Security navigation functional.
+- Adds honest Files and Automations panels instead of dead buttons.
+- Improves Chat error presentation for provider billing failures.
+- Bumps application version to 0.7.0.
+
+Apply by extracting this folder over the existing Engola repository, then run:
+  python -m py_compile main.py core/*.py routers/*.py tests/test_offline.py
+  git status
+  git diff --stat
+  git add core/config.py core/db.py main.py routers/memory.py routers/work.py static/index.html tests/test_offline.py README.md
+  git commit -m "Engola v0.7: functional work memory security UI"
+  git push origin master
