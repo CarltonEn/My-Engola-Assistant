@@ -35,6 +35,8 @@ RP_NAME = os.getenv("WEBAUTHN_RP_NAME", "Engola")
 WEBAUTHN_RP_ID = os.getenv("WEBAUTHN_RP_ID", "").strip()
 WEBAUTHN_ORIGIN = os.getenv("WEBAUTHN_ORIGIN", "").strip()
 ENGOLA_SETUP_TOKEN = os.getenv("ENGOLA_SETUP_TOKEN", "").strip()
+ENGOLA_ENROLLMENT_ENABLED = os.getenv("ENGOLA_ENROLLMENT_ENABLED", "0").strip() == "1"
+ENGOLA_VAULT_KEY = os.getenv("ENGOLA_VAULT_KEY", "").strip()
 ENGOLA_RECOVERY_TOKEN = os.getenv("ENGOLA_RECOVERY_TOKEN", "").strip()
 RECOVERY_COOKIE = "engola_recovery"
 RECOVERY_TTL = 600

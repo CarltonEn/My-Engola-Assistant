@@ -117,6 +117,7 @@ def db() -> sqlite3.Connection:
         created_at REAL NOT NULL, expires_at REAL NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
         last_attempt_at REAL, used_at REAL)"""
     )
+    c.execute("CREATE TABLE IF NOT EXISTS password_attempts(key_hash TEXT PRIMARY KEY, window_started REAL NOT NULL, attempts INTEGER NOT NULL DEFAULT 0)")
     defaults = [
         ("phone", "ask", "contacts, files, camera, microphone, notifications"),
         ("computer", "ask", "files, apps, browser, local automation"),
@@ -133,6 +134,22 @@ def db() -> sqlite3.Connection:
             "INSERT OR IGNORE INTO permissions(name,status,scope,updated_at) VALUES(?,?,?,?)",
             (*row, time.time()),
         )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS owner_passwords(
+        id INTEGER PRIMARY KEY CHECK (id = 1), password_hash TEXT NOT NULL,
+        created_at REAL NOT NULL, updated_at REAL NOT NULL)"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS owner_totp(
+        id INTEGER PRIMARY KEY CHECK (id = 1), secret_ciphertext TEXT NOT NULL,
+        enabled_at REAL NOT NULL)"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS owner_recovery_codes(
+        id INTEGER PRIMARY KEY AUTOINCREMENT, code_hash TEXT UNIQUE NOT NULL,
+        created_at REAL NOT NULL, used_at REAL)"""
+    )
+
     c.commit()
     return c
 
