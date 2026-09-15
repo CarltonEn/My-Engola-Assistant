@@ -81,10 +81,6 @@ app.include_router(capabilities_router)
 app.include_router(preferences_router)
 
 
-
 @app.get("/", response_class=HTMLResponse)
 def home():
-    html = (STATIC_DIR / "index.html").read_text()
-    marker = '</head>'
-    addons = '<link rel="stylesheet" href="/static/engola-v11.css"><script defer src="/static/engola-v11.js"></script><link rel="stylesheet" href="/static/engola-v12.css"><script defer src="/static/engola-v12.js"></script><link rel="stylesheet" href="/static/engola-v16.css"><script defer src="/static/engola-v16.js"></script><link rel="stylesheet" href="/static/engola-v17.css"><script defer src="/static/engola-v17.js"></script><link rel="stylesheet" href="/static/engola-v18.css"><script defer src="/static/engola-v18.js"></script><link rel="stylesheet" href="/static/engola-v1.1.css"><script defer src="/static/engola-v1.1.js"></script>'
-    return HTMLResponse(html.replace(marker, addons + marker, 1))
+    return HTMLResponse((STATIC_DIR / "index.html").read_text())

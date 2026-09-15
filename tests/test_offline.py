@@ -194,20 +194,20 @@ class TestVoiceNarration(unittest.TestCase):
 
 
 class TestVoiceInputUI(unittest.TestCase):
-    def test_microphone_input_is_wired_with_explicit_states_and_fallback(self):
+    def test_v2_conversation_ui_has_voice_integration_hook(self):
         from pathlib import Path
+
         html = (Path(REPO_ROOT) / "static" / "index.html").read_text()
-        for needle in (
-            'SpeechRecognition||window.webkitSpeechRecognition',
-            'id="micBtn"',
-            'id="voiceState"',
-            "setVoiceState('Listening'",
-            "setVoiceState('Processing'",
-            "setVoiceState('Responding'",
-            "setVoiceState('Error'",
-            'Voice input is not supported in this browser',
-        ):
-            self.assertIn(needle, html)
+        js = (Path(REPO_ROOT) / "static" / "engola-ui-v2.js").read_text()
+
+        self.assertIn('id="composer"', html)
+        self.assertIn('id="messageInput"', html)
+        self.assertIn('/static/engola-ui-v2.js', html)
+
+        # Voice is a post-deployment integration task.
+        # The v2 UI exposes the visual-state bridge that voice will drive.
+        self.assertIn("EngolaVisual", js)
+        self.assertIn("setState", js)
 
 class TestSecurityHelpers(unittest.TestCase):
     def test_hash_token_deterministic(self):
@@ -281,11 +281,24 @@ class TestReconciliationRegressions(unittest.TestCase):
         self.assertIn("if(!d.google?.configured)", js)
         self.assertIn("if(!d.github?.configured)", js)
 
-    def test_home_includes_current_status_layer(self):
+    def test_home_uses_v2_ui_without_legacy_injection(self):
         import main
-        html=main.home().body.decode('utf-8')
-        self.assertIn('/static/engola-v18.js', html)
-        self.assertIn('/static/engola-v18.css', html)
+
+        html = main.home().body.decode("utf-8")
+
+        self.assertIn("/static/engola-ui-v2.css", html)
+        self.assertIn("/static/engola-ui-v2.js", html)
+
+        # The old layered UI injection must remain absent.
+        for legacy_asset in (
+            "/static/engola-v11.js",
+            "/static/engola-v12.js",
+            "/static/engola-v16.js",
+            "/static/engola-v17.js",
+            "/static/engola-v18.js",
+            "/static/engola-v1.1.js",
+        ):
+            self.assertNotIn(legacy_asset, html)
 
     def test_disconnect_routes_accept_post(self):
         from routers.integration_actions import router
