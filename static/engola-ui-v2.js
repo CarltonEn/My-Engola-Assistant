@@ -26,9 +26,24 @@
   loginBtn?.addEventListener('click',loginOwner); setupBtn?.addEventListener('click',setupOwner);
 
   const setCoreState = (state) => {
+    const next = state || 'idle';
+
+    // Keep the existing CSS/UI state in sync.
     core.classList.remove('speaking','thinking','success','error');
-    if (state) core.classList.add(state);
-    stateLabel.textContent = ({idle:'Ready',thinking:'Working',speaking:'Speaking',success:'Done',error:'Needs attention'})[state] || 'Ready';
+    if (next !== 'idle') core.classList.add(next);
+
+    stateLabel.textContent = ({
+      idle:'Ready',
+      thinking:'Working',
+      speaking:'Speaking',
+      success:'Done',
+      error:'Needs attention'
+    })[next] || 'Ready';
+
+    // Drive the 3D core when it is available.
+    if (window.Engola3D?.setState) {
+      window.Engola3D.setState(next);
+    }
   };
   window.EngolaVisual = {setState:setCoreState};
 

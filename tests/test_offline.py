@@ -305,3 +305,18 @@ class TestReconciliationRegressions(unittest.TestCase):
         routes={(getattr(r,'path',''), tuple(sorted(getattr(r,'methods',set())))) for r in router.routes}
         self.assertTrue(any(path=='/api/integrations/google/disconnect' and 'POST' in methods for path,methods in routes))
         self.assertTrue(any(path=='/api/integrations/github/disconnect' and 'POST' in methods for path,methods in routes))
+
+
+class TestBraveProvider(unittest.TestCase):
+    def test_brave_provider_imports(self):
+        from core import brave
+        self.assertTrue(callable(brave.configured))
+        self.assertTrue(callable(brave.llm_context))
+        self.assertTrue(callable(brave.search))
+        self.assertTrue(callable(brave.answer))
+
+    def test_chat_module_imports_brave_provider(self):
+        import routers.chat as chat
+
+        self.assertTrue(hasattr(chat, "_brave_grounding"))
+        self.assertTrue(hasattr(chat, "brave_configured"))
