@@ -1,16 +1,14 @@
 """
-Owner authentication router (WebAuthn/passkey).
+Owner authentication router (WebAuthn/passkey) + safe recovery.
 
-This is a direct migration of the auth endpoints from the v0.5 canonical
-single-file app.py into its own router. The verification logic, error
-messages and status codes are unchanged. No biometric template is ever
-received or stored by the server -- only the WebAuthn public key credential
-(a cryptographic assertion), consistent with OWNER-IDENTITY.md.
+Passkey (fingerprint/face) is the ONLY way to authenticate as owner.
+There is no password or token-based login. A separate, single-use,
+rate-limited, time-boxed recovery flow exists ONLY to authorize
+registering a brand-new passkey when the original device is lost -- it
+never creates an owner session by itself.
 """
 import json
 import secrets
-import time
-from core.auth_security import hash_password, verify_password
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -146,6 +144,7 @@ def login_options(request: Request):
 async def login_verify(request: Request):
     if not WEBAUTHN_OK:
         return JSONResponse({"error": "WebAuthn server library is not installed."}, status_code=500)
+    body = await request.json()  # BUG FIX: this line was missing -- login always crashed without it
     challenge = take_challenge("authentication")
     if not challenge:
         return JSONResponse({"error": "Authentication challenge expired. Start again."}, status_code=400)
@@ -180,7 +179,12 @@ async def login_verify(request: Request):
         return JSONResponse({"error": f"Passkey authentication failed: {type(e).__name__}"}, status_code=403)
 
 
-
+# ---------------------------------------------------------------------
+# Safe owner recovery: proves identity via a separate, out-of-band
+# ENGOLA_RECOVERY_TOKEN, then permits registering ONE new passkey. It
+# never creates an owner session on its own -- only a real WebAuthn
+# registration does that, at the very end.
+# ---------------------------------------------------------------------
 
 RECOVERY_WINDOW = 300
 RECOVERY_MAX_ATTEMPTS = 5
@@ -227,7 +231,7 @@ def _recovery_state(request: Request):
     return row
 
 
-def _recovery_challenge_kind(request: Request) -> str | None:
+def _recovery_challenge_kind(request: Request):
     token = request.cookies.get(config.RECOVERY_COOKIE)
     return "recovery:" + hash_token(token) if token else None
 
@@ -238,6 +242,7 @@ async def recovery_start(request: Request):
         return JSONResponse({"error": "Owner setup is required before recovery is available."}, status_code=409)
     if _recovery_rate_limited(request):
         return JSONResponse({"error": "Recovery is rate-limited. Try again later."}, status_code=429)
+    body = await request.json()  # BUG FIX: this line was missing -- recovery always crashed without it
     supplied = (body.get("recovery_token") or "").strip()
     expected = config.ENGOLA_RECOVERY_TOKEN
     _record_recovery_attempt(request)
@@ -289,6 +294,7 @@ async def recovery_register_verify(request: Request):
     challenge = take_challenge(kind) if kind else None
     if not challenge:
         return JSONResponse({"error": "Recovery registration challenge expired. Start again."}, status_code=400)
+    body = await request.json()  # BUG FIX: this line was missing -- recovery registration always crashed without it
     with db() as c:
         c.execute("UPDATE recovery_state SET attempts=attempts+1,last_attempt_at=? WHERE id=?", (__import__("time").time(), state[0]))
         c.commit()
@@ -313,79 +319,6 @@ async def recovery_register_verify(request: Request):
     except Exception as exc:
         return JSONResponse({"error": f"Recovery registration failed: {type(exc).__name__}"}, status_code=400)
 
-PASSWORD_WINDOW = 300
-PASSWORD_MAX_ATTEMPTS = 5
-
-def _password_rate_key(request: Request):
-    host = request.client.host if request.client else "unknown"
-    return hash_token("password:" + host)
-
-def _password_allowed(request: Request):
-    key = _password_rate_key(request)
-    now = time.time()
-    row = db().execute(
-        "SELECT window_started, attempts FROM password_attempts WHERE key_hash=?",
-        (key,),
-    ).fetchone()
-    if not row or now - row[0] >= PASSWORD_WINDOW:
-        db().execute(
-            "INSERT OR REPLACE INTO password_attempts(key_hash, window_started, attempts) VALUES(?,?,0)",
-            (key, now),
-        )
-        return True
-    return row[1] < PASSWORD_MAX_ATTEMPTS
-
-def _password_failure(request: Request):
-    key = _password_rate_key(request)
-    now = time.time()
-    row = db().execute(
-        "SELECT window_started, attempts FROM password_attempts WHERE key_hash=?",
-        (key,),
-    ).fetchone()
-    if not row or now - row[0] >= PASSWORD_WINDOW:
-        db().execute(
-            "INSERT OR REPLACE INTO password_attempts(key_hash, window_started, attempts) VALUES(?,?,1)",
-            (key, now),
-        )
-    else:
-        db().execute(
-            "UPDATE password_attempts SET attempts=attempts+1 WHERE key_hash=?",
-            (key,),
-        )
-
-@router.post("/password/setup")
-async def password_setup(request: Request):
-    if not config.ENGOLA_ENROLLMENT_ENABLED:
-        return JSONResponse({"detail": "Owner enrollment is disabled."}, status_code=403)
-    if has_owner() is False:
-        return JSONResponse({"detail": "Register the owner passkey first."}, status_code=409)
-    data = await request.json()
-    password = data.get("password", "")
-    if not isinstance(password, str) or len(password) < 12:
-        return JSONResponse({"detail": "Password must be at least 12 characters."}, status_code=400)
-    encoded = hash_password(password)
-    now = time.time()
-    db().execute(
-        "INSERT OR REPLACE INTO owner_passwords(id,password_hash,created_at,updated_at) VALUES(1,?,?,?)",
-        (encoded, now, now),
-    )
-    return {"ok": True}
-
-@router.post("/password/login")
-async def password_login(request: Request):
-    if not _password_allowed(request):
-        return JSONResponse({"detail": "Too many password attempts. Try again later."}, status_code=429)
-    data = await request.json()
-    password = data.get("password", "")
-    row = db().execute(
-        "SELECT password_hash FROM owner_passwords WHERE id=1"
-    ).fetchone()
-    if not row or not isinstance(password, str) or not verify_password(password, row[0]):
-        _password_failure(request)
-        return JSONResponse({"detail": "Invalid password."}, status_code=401)
-    response = JSONResponse({"ok": True})
-    create_session(response)
-    return response
 
 @router.post("/logout")
 def logout(request: Request):
