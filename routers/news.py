@@ -56,7 +56,13 @@ def news_search(request: FastAPIRequest, q: str = "", limit: int = 12):
             "sources": list(NEWS_FEEDS)}
 
 
-@router.post("/../research/news")
+# NOTE: the previous /../research/news and /../research/news/save routes were
+# invalid FastAPI route paths (a literal ".." segment does not "escape" a
+# router's prefix -- FastAPI/Starlette treat it as a literal path component,
+# so those routes were only ever reachable at the nonsensical literal URL
+# "/api/news/../research/news", never at "/api/research/news" as intended).
+# Fixed by mounting them under this router's own /api/news prefix instead.
+@router.post("/compat/research-news")
 def research_news_compat(request: FastAPIRequest, q: str = "", limit: int = 12):
     """Compatibility path for the Replit-era research/news workflow.
 
@@ -68,7 +74,7 @@ def research_news_compat(request: FastAPIRequest, q: str = "", limit: int = 12):
         return denied
     return news_search(request, q=q, limit=limit)
 
-@router.post("/../research/news/save")
+@router.post("/save")
 def save_news(request: FastAPIRequest, item: dict):
     denied = require_owner(request)
     if denied:

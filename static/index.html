@@ -1,15 +1,162 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Engola</title><link rel="stylesheet" href="/static/engola-ui-v2.css"></head><body>
-<div id="auth" class="auth-overlay"><div class="auth-card"><div class="auth-mark">ENGOLA</div><h1>Unlock</h1><p id="authText">Use the registered passkey to enter your workspace.</p><button class="auth-primary" id="loginBtn">Unlock as Engola Innocent</button><button class="auth-primary hidden" id="setupBtn">Register this device</button><div id="authError" class="auth-error" role="alert"></div></div></div>
+<div id="auth" class="auth-overlay"><div class="auth-card"><div class="auth-mark">ENGOLA</div><h1>Unlock</h1><p id="authText">Use the registered passkey to enter your workspace.</p><button class="auth-primary" id="loginBtn">Unlock as Engola Innocent</button><button class="auth-primary hidden" id="setupBtn">Register this device</button><button class="auth-primary hidden" id="recoveryToggleBtn" style="background:transparent;color:var(--muted);border:1px solid var(--line);margin-top:8px">Recover access</button><div id="recoveryBox" class="hidden" style="margin-top:14px;text-align:left"><input id="recoveryTokenInput" placeholder="Recovery token" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);margin-bottom:8px"><button class="auth-primary" id="recoveryStartBtn">Start recovery</button><div id="recoveryStep2" class="hidden" style="margin-top:10px"><button class="auth-primary" id="recoveryRegisterBtn">Register new passkey</button></div></div><div id="authError" class="auth-error" role="alert"></div></div></div>
 <div class="app hidden" id="app">
 <header class="topbar"><div class="brand"><span class="brand-mark"></span><span>ENGOLA</span></div><div class="top-actions"><button class="icon-btn" id="workspaceOpen" aria-label="Open workspace">⌘</button><button class="icon-btn" id="settingsOpen" aria-label="Settings">⚙</button></div></header>
 <div class="layout">
 <nav class="rail" aria-label="Engola workspace"><button class="rail-btn active" id="workspaceOpen2" title="Workspace">◈</button><button class="rail-btn" data-command="Show my current briefing" title="Briefing">◌</button><button class="rail-btn" data-command="What should I focus on now?" title="Focus">◒</button><div class="rail-spacer"></div><button class="rail-btn" id="settingsOpen2" title="Settings">⚙</button></nav>
 <main class="stage">
 <section class="chat"><div class="chat-head"><div class="presence"><span class="presence-dot"></span><div><strong>Engola</strong><br><small>Ready when you are</small></div></div><small style="color:var(--muted)">Private workspace</small></div>
-<div class="messages" id="messages"><div class="message engola"><div class="meta">ENGOLA</div><div class="bubble">I’m here. Tell me what you want to work on.</div><div class="reaction-row"><button class="reaction" data-reaction="👍">👍</button><button class="reaction" data-reaction="❤️">❤️</button><button class="reaction" data-reaction="✨">✨</button><button class="reaction" data-reaction="📌">📌</button></div></div></div>
+<div class="messages" id="messages"><div class="message engola"><div class="meta">ENGOLA</div><div class="bubble">I'm here. Tell me what you want to work on. Local commands (tasks, memory, permissions, briefing) work even without an AI provider connected.</div><div class="reaction-row"><button class="reaction" data-reaction="👍">👍</button><button class="reaction" data-reaction="❤️">❤️</button><button class="reaction" data-reaction="✨">✨</button><button class="reaction" data-reaction="📌">📌</button></div></div></div>
 <form class="composer" id="composer"><div class="compose-box"><button type="button" class="icon-btn" style="width:38px;height:38px" data-command="I want to attach something to this conversation">＋</button><input id="messageInput" autocomplete="off" placeholder="Talk to Engola…"><button class="send" type="submit">↑</button></div></form></section>
-<aside class="core-panel"><div class="core-wrap"><div class="core" id="engolaCore"><div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div><span class="node n1"></span><span class="node n2"></span><span class="node n3"></span><div class="core-sphere"></div></div></div><div class="core-label"><strong>Engola</strong><span id="coreState">Ready</span></div><div class="side-content"><div class="side-card"><h3>Workspace</h3><div class="setting-row"><span>Knowledge</span><span class="state">Available</span></div><div class="setting-row"><span>Memory</span><span class="state">Available</span></div><div class="setting-row"><span>Tasks</span><span class="state">Available</span></div></div><div class="side-card"><h3>Connections</h3><div class="setting-row"><span>Managed in Settings</span><span>Private</span></div></div></div></aside>
-<div class="workspace" id="workspace"><div class="workspace-head"><div><h2 style="margin:0">Workspace</h2><span style="color:var(--muted);font-size:12px">Knowledge, media, tasks and memory live here.</span></div><button class="icon-btn" id="workspaceClose">×</button></div><div class="workspace-tabs"><button class="active">Knowledge</button><button>Media</button><button>Tasks</button><button>Memory</button><button>Capabilities</button></div><div class="workspace-card"><strong>Contextual workspace</strong><p style="color:var(--muted)">These surfaces support Engola without turning the main conversation into an integration dashboard.</p></div></div>
-<div class="settings" id="settings"><div class="workspace-head"><div><h2>Settings</h2><p>Connections and environment. Engola’s capabilities remain accessible through conversation and commands.</p></div><button class="icon-btn" id="settingsClose">×</button></div><section class="settings-section"><h3>CONNECTIONS</h3><div class="connection"><div><strong>Google</strong><br><span>Gmail · Drive · Calendar · People</span></div><b class="pill">Connected</b></div><div class="connection"><div><strong>Telegram</strong><br><span>Archive channel / bot interface</span></div><b class="pill">Configured</b></div><div class="connection"><div><strong>OpenAI</strong><br><span>Reasoning and tools</span></div><b class="pill">Connected</b></div><div class="connection"><div><strong>Terminal</strong><br><span>Paired devices</span></div><b class="pill">Ready</b></div><div class="connection"><div><strong>Wikipedia</strong><br><span>Reference knowledge</span></div><b class="pill">Available</b></div></section><section class="settings-section"><h3>WALLPAPER</h3><div class="custom-grid"><button class="choice active" data-wallpaper="none">Obsidian</button><button class="choice" data-wallpaper="">Frost</button><button class="choice" data-wallpaper="">Aurora</button><button class="choice" data-wallpaper="">Minimal</button></div></section><section class="settings-section"><h3>ENGOLA APPEARANCE</h3><div class="custom-grid"><button class="choice" data-accent="#a78bfa">Violet</button><button class="choice" data-accent="#67e8f9">Cyan</button><button class="choice" data-accent="#79e6a4">Emerald</button><button class="choice" data-accent="#f5c77a">Warm</button></div></section></div>
+<aside class="core-panel"><div class="core-wrap"><div class="core" id="engolaCore"><div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div><span class="node n1"></span><span class="node n2"></span><span class="node n3"></span><div class="core-sphere"></div></div></div><div class="core-label"><strong>Engola</strong><span id="coreState">Ready</span></div><div class="side-content"><div class="side-card"><h3>Workspace</h3><div class="setting-row"><span>Knowledge</span><span class="state" id="sideKnowledge">Available</span></div><div class="setting-row"><span>Memory</span><span class="state" id="sideMemory">Available</span></div><div class="setting-row"><span>Tasks</span><span class="state" id="sideTasks">Available</span></div></div><div class="side-card"><h3>Connections</h3><div class="setting-row"><span>OpenAI</span><span class="state" id="sideOpenAI">—</span></div><div class="setting-row"><span>Gemini</span><span class="state" id="sideGemini">—</span></div><div class="setting-row"><span>Google</span><span class="state" id="sideGoogleConn">—</span></div><div class="setting-row"><span>GitHub</span><span class="state" id="sideGithubConn">—</span></div></div></div></aside>
+
+<div class="workspace" id="workspace">
+<div class="workspace-head"><div><h2 style="margin:0">Workspace</h2><span style="color:var(--muted);font-size:12px">Knowledge, tasks, memory and every real capability live here.</span></div><button class="icon-btn" id="workspaceClose">×</button></div>
+<div class="workspace-tabs" id="workspaceTabs">
+<button class="active" data-panel="knowledge">Knowledge</button>
+<button data-panel="tasks">Tasks</button>
+<button data-panel="memory">Memory</button>
+<button data-panel="career">Career</button>
+<button data-panel="uganda">Uganda Knowledge</button>
+<button data-panel="permissions">Permissions</button>
+<button data-panel="voice">Voice</button>
+<button data-panel="integrations">Integrations</button>
+<button data-panel="devices">Devices</button>
+<button data-panel="research">Research</button>
+<button data-panel="system">System</button>
+<button data-panel="security">Security</button>
+<button data-panel="capabilities">Capabilities</button>
+<button data-panel="media">Media</button>
+</div>
+
+<div class="workspace-card" data-panel="knowledge">
+  <strong>Knowledge Vault</strong>
+  <p style="color:var(--muted);margin:6px 0 14px">Ingest a URL (including YouTube — transcript is pulled automatically) or upload a PDF/TXT/Markdown file.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <input id="knowledgeUrl" placeholder="https://…  or a YouTube link" style="flex:1;min-width:220px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
+    <button class="icon-btn" style="width:auto;padding:0 16px" id="knowledgeIngestBtn">Ingest</button>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <input type="file" id="knowledgeFile" accept=".pdf,.txt,.md,.markdown" style="color:var(--muted)">
+    <button class="icon-btn" style="width:auto;padding:0 16px" id="knowledgeUploadBtn">Upload</button>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <input id="knowledgeWikiQuery" placeholder="Search Wikipedia…" style="flex:1;min-width:220px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
+    <button class="icon-btn" style="width:auto;padding:0 16px" id="knowledgeWikiBtn">Search</button>
+  </div>
+  <div id="knowledgeStatus" style="color:var(--warm);font-size:12px;min-height:16px;margin-bottom:10px"></div>
+  <div id="knowledgeWikiResults"></div>
+  <div id="knowledgeList" style="display:grid;gap:8px"></div>
+</div>
+
+<div class="workspace-card" data-panel="tasks" style="display:none">
+  <strong>Tasks</strong>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+    <input id="taskTitle" placeholder="New task title…" style="flex:1;min-width:200px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
+    <select id="taskPriority" style="padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
+      <option value="normal">normal</option><option value="high">high</option><option value="low">low</option>
+    </select>
+    <button class="icon-btn" style="width:auto;padding:0 16px" id="taskAddBtn">Add</button>
+  </div>
+  <div id="taskStatus" style="color:var(--warm);font-size:12px;min-height:16px"></div>
+  <div id="taskList" style="display:grid;gap:8px"></div>
+</div>
+
+<div class="workspace-card" data-panel="memory" style="display:none">
+  <strong>Memory</strong>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+    <input id="memoryKey" placeholder="key" style="width:140px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
+    <input id="memoryValue" placeholder="value" style="flex:1;min-width:180px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
+    <button class="icon-btn" style="width:auto;padding:0 16px" id="memoryAddBtn">Save</button>
+  </div>
+  <div id="memoryStatus" style="color:var(--warm);font-size:12px;min-height:16px"></div>
+  <div id="memoryList" style="display:grid;gap:8px"></div>
+</div>
+
+<div class="workspace-card" data-panel="career" style="display:none">
+  <strong>Career &amp; Jobs</strong>
+  <p style="color:var(--muted);margin:6px 0 14px">Match scoring is explainable and compares a job description against skills saved in memory (e.g. key <code>skill:profile</code>, value <code>python, tax law, fastapi</code>). Nothing is ever submitted automatically.</p>
+  <input id="careerTitle" placeholder="Job title" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);margin-bottom:8px">
+  <input id="careerCompany" placeholder="Company (optional)" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);margin-bottom:8px">
+  <input id="careerUrl" placeholder="Listing URL (optional)" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);margin-bottom:8px">
+  <textarea id="careerDescription" placeholder="Paste the job description…" style="width:100%;min-height:80px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);margin-bottom:8px"></textarea>
+  <button class="icon-btn" style="width:auto;padding:0 16px" id="careerAddBtn">Add &amp; score</button>
+  <div id="careerStatus" style="color:var(--warm);font-size:12px;min-height:16px;margin-top:8px"></div>
+  <div id="careerList" style="display:grid;gap:8px;margin-top:10px"></div>
+</div>
+
+<div class="workspace-card" data-panel="uganda" style="display:none">
+  <strong>Uganda Knowledge</strong>
+  <p style="color:var(--muted);margin:6px 0 14px">Authoritative Ugandan government/regulatory sources for tax, legal and business questions.</p>
+  <div id="ugandaList" style="display:grid;gap:8px"></div>
+</div>
+
+<div class="workspace-card" data-panel="permissions" style="display:none">
+  <strong>Permissions</strong>
+  <div id="permissionsList" style="display:grid;gap:8px;margin-top:10px"></div>
+</div>
+
+<div class="workspace-card" data-panel="voice" style="display:none">
+  <strong>Voice</strong>
+  <textarea id="voiceText" placeholder="Text to narrate or speak…" style="width:100%;min-height:80px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);margin:10px 0"></textarea>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="icon-btn" style="width:auto;padding:0 16px" id="voiceNarrateBtn">Shape script</button>
+    <button class="icon-btn" style="width:auto;padding:0 16px" id="voiceSpeakBtn">Speak (real audio)</button>
+  </div>
+  <div id="voiceStatus" style="color:var(--warm);font-size:12px;min-height:16px;margin-top:8px"></div>
+  <audio id="voiceAudio" controls style="width:100%;margin-top:10px;display:none"></audio>
+  <div id="voiceSegments" style="display:grid;gap:6px;margin-top:10px"></div>
+</div>
+
+<div class="workspace-card" data-panel="integrations" style="display:none">
+  <strong>Integrations</strong>
+  <p style="color:var(--muted);margin:6px 0 14px">Google (Calendar/Gmail) and GitHub connect via OAuth. No fake "connected" status — this reflects the real server state.</p>
+  <div id="integrationsStatus" style="display:grid;gap:10px"></div>
+</div>
+
+<div class="workspace-card" data-panel="devices" style="display:none">
+  <strong>Devices</strong>
+  <p style="color:var(--muted);margin:6px 0 14px">Pair a companion device (e.g. an Android app polling for commands) with a one-time code.</p>
+  <button class="icon-btn" style="width:auto;padding:0 16px" id="devicePairBtn">Generate pairing code</button>
+  <div id="deviceStatus" style="color:var(--warm);font-size:12px;min-height:16px;margin-top:8px"></div>
+  <div id="deviceList" style="display:grid;gap:8px;margin-top:10px"></div>
+</div>
+
+<div class="workspace-card" data-panel="research" style="display:none">
+  <strong>Research</strong>
+  <div style="display:flex;gap:8px;margin:12px 0">
+    <input id="researchQuery" placeholder="Search the public web…" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
+    <button class="icon-btn" style="width:auto;padding:0 16px" id="researchBtn">Search</button>
+  </div>
+  <div id="researchStatus" style="color:var(--warm);font-size:12px;min-height:16px"></div>
+  <div id="researchList" style="display:grid;gap:8px"></div>
+</div>
+
+<div class="workspace-card" data-panel="system" style="display:none">
+  <strong>System Status</strong>
+  <div id="systemStatus" style="display:grid;gap:8px;margin-top:10px"></div>
+</div>
+
+<div class="workspace-card" data-panel="security" style="display:none">
+  <strong>Security</strong>
+  <p style="color:var(--muted);margin:6px 0 14px">Passkey (fingerprint/face) is the only way to authenticate. To register an additional device's passkey, use the recovery token from the lock screen — it authorizes registering one new passkey and never logs in on its own.</p>
+  <div id="securityStatus" style="display:grid;gap:8px;margin-top:10px"></div>
+  <button class="icon-btn" style="width:auto;padding:0 16px;margin-top:10px" id="logoutBtn">Log out this session</button>
+</div>
+
+<div class="workspace-card" data-panel="capabilities" style="display:none">
+  <strong>Capabilities</strong>
+  <p style="color:var(--muted);margin:6px 0 14px">What Engola can actually execute right now, honestly labeled.</p>
+  <div id="capabilitiesList" style="display:grid;gap:8px"></div>
+</div>
+
+<div class="workspace-card" data-panel="media" style="display:none">
+  <strong>Media</strong>
+  <p style="color:var(--muted)">A dedicated media-intelligence endpoint exists in this codebase (<code>routers/media.py</code>) but its request/response contract was not available when this dashboard was built, so this tab is left honest rather than guessed at. YouTube links can already be processed through the <b>Knowledge</b> tab's URL ingestion (transcript is pulled automatically).</p>
+</div>
+
+</div>
+
+<div class="settings" id="settings"><div class="workspace-head"><div><h2>Settings</h2><p>Connections and environment. Engola's capabilities remain accessible through conversation and the Workspace.</p></div><button class="icon-btn" id="settingsClose">×</button></div><section class="settings-section"><h3>CONNECTIONS</h3><div class="connection"><div><strong>Google</strong><br><span>Gmail · Calendar</span></div><b class="pill" id="connGoogle">Checking…</b></div><div class="connection"><div><strong>GitHub</strong><br><span>Repos · Issues</span></div><b class="pill" id="connGithub">Checking…</b></div><div class="connection"><div><strong>OpenAI</strong><br><span>Primary reasoning</span></div><b class="pill" id="connOpenAI">Checking…</b></div><div class="connection"><div><strong>Gemini</strong><br><span>Fallback reasoning</span></div><b class="pill" id="connGemini">Checking…</b></div><div class="connection"><div><strong>Telegram Archive</strong><br><span>Cold storage archival</span></div><b class="pill" id="connTelegram">Checking…</b></div><div class="connection"><div><strong>Wikipedia</strong><br><span>Reference knowledge</span></div><b class="pill">Available</b></div></section><section class="settings-section"><h3>WALLPAPER</h3><div class="custom-grid"><button class="choice active" data-wallpaper="none">Obsidian</button><button class="choice" data-wallpaper="">Frost</button><button class="choice" data-wallpaper="">Aurora</button><button class="choice" data-wallpaper="">Minimal</button></div></section><section class="settings-section"><h3>ENGOLA APPEARANCE</h3><div class="custom-grid"><button class="choice" data-accent="#a78bfa">Violet</button><button class="choice" data-accent="#67e8f9">Cyan</button><button class="choice" data-accent="#79e6a4">Emerald</button><button class="choice" data-accent="#f5c77a">Warm</button></div></section></div>
 </main></div></div><script type="module" src="/static/engola-3d-core.js"></script>
 <script src="/static/engola-ui-v2.js"></script></body></html>
