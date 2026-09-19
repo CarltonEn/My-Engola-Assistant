@@ -339,7 +339,7 @@
   panelLoaders.integrations = loadIntegrations;
   document.addEventListener('click', (e) => {
     const connect = e.target.closest('[data-int-connect]');
-    if (connect) window.location.href = `/api/integrations/${connect.dataset.intConnect}/authorize`;
+    if (connect) window.location.href = `/api/${connect.dataset.intConnect}/authorize`;
     const disconnect = e.target.closest('[data-int-disconnect]');
     if (disconnect) { fetch(`/api/integrations/${disconnect.dataset.intDisconnect}/disconnect?confirm=1`, {credentials:'same-origin'}).then(loadIntegrations); }
     const load = e.target.closest('[data-int-load]');
