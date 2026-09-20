@@ -4,6 +4,7 @@ import json
 import os
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 
 
 BASE_URL = "https://api.search.brave.com/res/v1"
@@ -32,8 +33,12 @@ def _get(path: str, params: str) -> dict:
         method="GET",
     )
 
-    with urlopen(req, timeout=20) as response:
-        return json.loads(response.read().decode("utf-8"))
+    try:
+        with urlopen(req, timeout=20) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace") if exc.fp else str(exc)
+        raise RuntimeError(f"Brave {path} request failed ({exc.code}): {detail[:400]}") from exc
 
 
 def llm_context(query: str, count: int = 5) -> dict:
@@ -107,8 +112,12 @@ def answer(messages: list[dict]) -> str:
         method="POST",
     )
 
-    with urlopen(req, timeout=45) as response:
-        data = json.loads(response.read().decode("utf-8"))
+    try:
+        with urlopen(req, timeout=45) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace") if exc.fp else str(exc)
+        raise RuntimeError(f"Brave chat/completions request failed ({exc.code}): {detail[:400]}") from exc
 
     choices = data.get("choices") or []
 
