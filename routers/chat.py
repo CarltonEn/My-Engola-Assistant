@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
 
 from core import ai
@@ -11,6 +11,7 @@ from core.knowledge import search_for_chat
 from core.gemini import configured as gemini_configured, respond as gemini_respond
 from core.brave import configured as brave_configured, llm_context, answer as brave_answer
 from core.persona import conversational, owner_snapshot
+from core.memory_learning import extract_and_remember
 
 
 router = APIRouter(prefix="/api", tags=["chat"])
@@ -125,7 +126,7 @@ def _provider_answer(text: str, grounding: str = "") -> str:
 
 
 @router.post("/chat")
-async def chat(request: Request):
+async def chat(request: Request, background_tasks: BackgroundTasks):
     denied = require_owner(request)
 
     if denied:
@@ -216,6 +217,7 @@ async def chat(request: Request):
                 )
 
                 save_message("assistant", answer)
+                background_tasks.add_task(extract_and_remember, text, answer)
 
                 return {
                     "ok": True,
@@ -271,6 +273,7 @@ async def chat(request: Request):
                 )
 
                 save_message("assistant", answer)
+                background_tasks.add_task(extract_and_remember, text, answer)
 
                 return {
                     "ok": True,
@@ -311,6 +314,7 @@ async def chat(request: Request):
                 )
 
                 save_message("assistant", answer)
+                background_tasks.add_task(extract_and_remember, text, answer)
 
                 return {
                     "ok": True,
