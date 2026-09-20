@@ -300,17 +300,14 @@ async def chat(request: Request, background_tasks: BackgroundTasks):
 
         if brave_configured():
             try:
-                messages = _base_messages()
-
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": text,
-                    }
-                )
-
+                # Confirmed via production error: Brave's /chat/completions
+                # endpoint hard-rejects more than 1 item in `messages`
+                # ("List should have at most 1 item after validation") --
+                # despite being "OpenAI-compatible" in shape, it does not
+                # accept a system prompt or conversation history the way
+                # OpenAI/Gemini do. Send only the raw question.
                 answer = conversational(
-                    brave_answer(messages)
+                    brave_answer([{"role": "user", "content": text}])
                 )
 
                 save_message("assistant", answer)

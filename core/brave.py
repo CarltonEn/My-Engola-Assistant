@@ -27,7 +27,6 @@ def _get(path: str, params: str) -> dict:
         f"{BASE_URL}/{path}?{params}",
         headers={
             "Accept": "application/json",
-            "Accept-Encoding": "gzip",
             "X-Subscription-Token": key,
         },
         method="GET",
