@@ -1,14 +1,32 @@
 import os
 
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from core.ai import is_configured as openai_configured
 from core.command_bridge import recent
 from core.db import db
-from core.gemini import configured as gemini_configured
+from core.gemini import configured as gemini_configured, list_models as gemini_list_models
 from core.security import require_owner
 
 router = APIRouter(prefix="/api/system", tags=["system"])
+
+
+@router.get("/gemini/models")
+def gemini_models(request: Request):
+    """Diagnostic: Google renames/retires Gemini model IDs often enough
+    that GEMINI_MODEL can silently start 404ing. This calls Google's own
+    ListModels for the configured key so the owner can pick a currently
+    valid one rather than guessing."""
+    denied = require_owner(request)
+    if denied:
+        return denied
+    if not gemini_configured():
+        return JSONResponse({"ok": False, "error": "Gemini is not configured (GEMINI_API_KEY unset)."}, status_code=503)
+    try:
+        return {"ok": True, "models": gemini_list_models()}
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=502)
 
 
 @router.get("/status")

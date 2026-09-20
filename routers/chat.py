@@ -9,7 +9,7 @@ from core.db import db, memory_text, recent, save_message
 from core.security import require_owner
 from core.knowledge import search_for_chat
 from core.gemini import configured as gemini_configured, respond as gemini_respond
-from core.brave import configured as brave_configured, llm_context, answer as brave_answer
+from core.brave import configured as brave_configured, llm_context, answer as brave_answer, search as brave_search
 from core.persona import conversational, owner_snapshot
 from core.memory_learning import extract_and_remember
 
@@ -333,6 +333,44 @@ async def chat(request: Request, background_tasks: BackgroundTasks):
                 brave_error = f"{type(e).__name__}: {e}"
         else:
             brave_error = "Brave Search is not configured"
+
+        # ---------------------------------------------------------
+        # BRAVE WEB-SEARCH FALLBACK (broader plan availability than
+        # the gated Answers/chat-completions endpoint above -- if the
+        # account doesn't have the Answers plan active, a 4xx there
+        # doesn't mean Brave itself is unusable, just that endpoint is)
+        # ---------------------------------------------------------
+
+        if brave_configured() and brave_error:
+            try:
+                web_results = brave_search(text, count=5)
+            except Exception as e:
+                web_results = []
+                brave_error = f"{brave_error} | web search also failed: {type(e).__name__}: {e}"
+
+            if web_results:
+                blocks = [
+                    f"SOURCE: {r.get('title') or r.get('url') or 'Web result'}\n"
+                    f"URL: {r.get('url') or ''}\n"
+                    f"{r.get('description') or ''}"
+                    for r in web_results
+                ]
+                answer = (
+                    "I couldn't generate a synthesized answer (no working AI reasoning "
+                    "provider is available right now), but here is what a live Brave web "
+                    "search found, Sir.\n\n" + "\n\n---\n\n".join(blocks)
+                )
+                save_message("assistant", answer)
+                return {
+                    "ok": True,
+                    "answer": answer,
+                    "mode": "brave_search",
+                    "intent": "web_search",
+                    "executed": False,
+                    "verified": True,
+                    "needs_approval": False,
+                    "data": {"web_grounded": True, "synthesized": False},
+                }
 
         # ---------------------------------------------------------
         # KNOWLEDGE-ONLY FALLBACK
