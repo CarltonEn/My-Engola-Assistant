@@ -52,7 +52,7 @@ def llm_context(query: str, count: int = 5) -> dict:
 
     return _get(
         "llm/context",
-        f"q={quote(query)}&count={count}&country=UG&search_lang=en",
+        f"q={quote(query)}&count={count}&search_lang=en",
     )
 
 
@@ -68,7 +68,7 @@ def search(query: str, count: int = 5) -> list[dict]:
 
     data = _get(
         "web/search",
-        f"q={quote(query)}&count={count}&country=UG&search_lang=en&extra_snippets=true",
+        f"q={quote(query)}&count={count}&search_lang=en&extra_snippets=true",
     )
 
     results = data.get("web", {}).get("results", [])
