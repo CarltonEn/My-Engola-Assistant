@@ -1,15 +1,22 @@
 from __future__ import annotations
-from fastapi import APIRouter, HTTPException, Request, UploadFile, File
+import html
+import re
+import urllib.parse
+import urllib.request
+from fastapi import APIRouter, HTTPException, Request, Response, UploadFile, File
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from core.knowledge import delete_source, get_source, ingest_url, list_sources, search_sources, import_text_source
 from core.security import require_owner
-from core import archive, jobs, ledger, storage
+from core import archive, brave, jobs, ledger, storage
+from core.worker import handle_restore
 from core.config import AUTO_ARCHIVE
 import json
 import os
 from urllib.parse import quote
 from urllib.request import Request as UrlRequest, urlopen
+
+WIKI_USER_AGENT = "EngolaPersonalAssistant/1.0 (private single-owner research tool; contact via server operator)"
 
 router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
 
@@ -79,7 +86,7 @@ def wiki_search(request: Request, query: str = ""):
     if not q:
         return {"ok": True, "results": []}
     url = "https://en.wikipedia.org/w/api.php?action=opensearch&search=" + quote(q) + "&limit=6&namespace=0&format=json"
-    req = UrlRequest(url, headers={"User-Agent": "Engola/0.11 (Wikipedia research)"})
+    req = UrlRequest(url, headers={"User-Agent": WIKI_USER_AGENT})
     try:
         with urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode("utf-8", errors="replace"))
@@ -90,6 +97,74 @@ def wiki_search(request: Request, query: str = ""):
     urls = data[3] if len(data) > 3 else []
     return {"ok": True, "results": [{"title": t, "description": descriptions[i] if i < len(descriptions) else "", "url": urls[i] if i < len(urls) else ""} for i, t in enumerate(titles)]}
 
+def _wikipedia_results(q: str) -> list[dict]:
+    url = "https://en.wikipedia.org/w/api.php?action=opensearch&search=" + quote(q) + "&limit=5&namespace=0&format=json"
+    req = UrlRequest(url, headers={"User-Agent": WIKI_USER_AGENT})
+    with urlopen(req, timeout=10) as response:
+        data = json.loads(response.read().decode("utf-8", errors="replace"))
+    titles = data[1] if len(data) > 1 else []
+    descriptions = data[2] if len(data) > 2 else []
+    urls = data[3] if len(data) > 3 else []
+    return [{"source": "wikipedia", "title": t, "url": urls[i] if i < len(urls) else "",
+             "description": descriptions[i] if i < len(descriptions) else ""} for i, t in enumerate(titles)]
+
+def _duckduckgo_results(q: str) -> list[dict]:
+    req = urllib.request.Request(
+        "https://html.duckduckgo.com/html/?" + urllib.parse.urlencode({"q": q}),
+        headers={"User-Agent": "Engola/1.0"},
+    )
+    with urllib.request.urlopen(req, timeout=15) as r:
+        t = r.read().decode("utf-8", "replace")
+    out = []
+    for block in re.findall(r'<div class="result__body".*?</div>\s*</div>', t, re.S):
+        a = re.search(r'class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', block, re.S)
+        sn = re.search(r'class="result__snippet"[^>]*>(.*?)</a?>', block, re.S)
+        if a:
+            out.append({
+                "source": "duckduckgo",
+                "title": html.unescape(re.sub("<.*?>", "", a.group(2))),
+                "url": html.unescape(a.group(1)),
+                "description": html.unescape(re.sub(r"\s+", " ", re.sub("<.*?>", "", sn.group(1) if sn else ""))),
+            })
+    return out
+
+@router.get("/search-all")
+def knowledge_search_all(request: Request, q: str = ""):
+    """One search bar, every free knowledge source. Each source fails
+    independently and reports its own error rather than one bad source
+    breaking the whole search."""
+    denied = require_owner(request)
+    if denied: return denied
+    query = (q or "").strip()
+    if not query:
+        return {"ok": True, "query": "", "results": []}
+
+    results = []
+    for item in search_sources(query, limit=6):
+        results.append({
+            "source": "vault", "title": item.get("title", ""), "url": item.get("url", ""),
+            "description": (item.get("excerpt") or "")[:320],
+        })
+    try:
+        results.extend(_wikipedia_results(query))
+    except Exception as exc:
+        results.append({"source": "wikipedia", "error": str(exc)})
+
+    if brave.configured():
+        try:
+            for r in brave.search(query, count=5):
+                results.append({"source": "brave", "title": r.get("title", ""), "url": r.get("url", ""),
+                                "description": r.get("description", "")})
+        except Exception as exc:
+            results.append({"source": "brave", "error": str(exc)})
+    else:
+        try:
+            results.extend(_duckduckgo_results(query))
+        except Exception as exc:
+            results.append({"source": "duckduckgo", "error": str(exc)})
+
+    return {"ok": True, "query": query, "results": results}
+
 @router.get("/{source_id}")
 def knowledge_get(source_id: int, request: Request):
     denied = require_owner(request)
@@ -98,6 +173,34 @@ def knowledge_get(source_id: int, request: Request):
     if not source:
         raise HTTPException(404, "Knowledge source not found")
     return {"ok": True, "source": source}
+
+@router.get("/{source_id}/original")
+def knowledge_original(source_id: int, request: Request):
+    """On-demand restore of the original file, from the hot tier if still
+    present, or rehydrated from its verified Telegram/Gmail archive pointer
+    otherwise (reusing the same hash-verified restore path the background
+    worker uses, not a shortcut)."""
+    denied = require_owner(request)
+    if denied: return denied
+    source = get_source(source_id)
+    if not source:
+        raise HTTPException(404, "Knowledge source not found")
+    blob_hash = source.get("blob_hash")
+    if not blob_hash:
+        raise HTTPException(404, "No original file was preserved for this source.")
+    data = storage.get_blob_bytes(blob_hash)
+    if data is None:
+        try:
+            handle_restore({"blob_hash": blob_hash})
+        except Exception as exc:
+            raise HTTPException(502, f"Could not restore the archived original: {exc}") from exc
+        data = storage.get_blob_bytes(blob_hash)
+    if data is None:
+        raise HTTPException(502, "Restore completed but the file could not be read back.")
+    record = storage.get_blob_record(blob_hash)
+    filename = (record.filename if record else None) or f"{blob_hash}.bin"
+    mime = (record.mime_type if record else None) or "application/octet-stream"
+    return Response(content=data, media_type=mime, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 @router.post("/ingest")
 def knowledge_ingest(body: IngestBody, request: Request):

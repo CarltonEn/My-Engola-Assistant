@@ -67,6 +67,12 @@ def db() -> sqlite3.Connection:
         metadata TEXT NOT NULL DEFAULT '{}', text TEXT NOT NULL,
         created_at REAL NOT NULL, updated_at REAL NOT NULL)"""
     )
+    # Additive: links a knowledge source to its archived original file (if any),
+    # by content hash into the blobs table (core/storage.py).
+    try:
+        c.execute("ALTER TABLE knowledge_sources ADD COLUMN blob_hash TEXT")
+    except Exception:
+        pass  # column already exists
 
     # Additive: Google OAuth token storage (owner-only, single row)
     c.execute(

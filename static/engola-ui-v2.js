@@ -144,8 +144,8 @@
     try {
       const d = await api('/api/knowledge');
       list.innerHTML = d.sources.length ? d.sources.map(s => row(
-        escapeHtml(s.title || s.url), `${s.kind} · ${s.characters} chars · ${s.status}`,
-        smallBtn('Delete', `data-know-del="${s.id}"`)
+        escapeHtml(s.title || s.url), `${s.kind} · ${s.characters} chars · ${s.status}${s.has_original ? ' · original preserved' : ''}`,
+        (s.has_original ? smallBtn('Download original', `data-know-original="${s.id}"`) : '') + smallBtn('Delete', `data-know-del="${s.id}"`)
       )).join('') : '<div style="color:var(--muted)">No sources yet.</div>';
     } catch (e) { list.textContent = e.message; }
   }
@@ -171,19 +171,28 @@
       status.textContent = 'Uploaded.'; fileInput.value=''; loadKnowledge();
     } catch (e) { status.textContent = e.message; }
   });
-  qs('#knowledgeWikiBtn')?.addEventListener('click', async () => {
-    const q = qs('#knowledgeWikiQuery').value.trim();
-    const out = qs('#knowledgeWikiResults');
+  const sourceLabel = { vault: '📚 your vault', wikipedia: '🌐 Wikipedia', brave: '🔎 Brave', duckduckgo: '🔎 DuckDuckGo' };
+  qs('#knowledgeSearchBtn')?.addEventListener('click', async () => {
+    const q = qs('#knowledgeSearchQuery').value.trim();
+    const out = qs('#knowledgeSearchResults');
+    const status = qs('#knowledgeStatus');
     if (!q) return;
-    out.textContent = 'Searching…';
+    out.textContent = ''; status.textContent = 'Searching your vault, Wikipedia and the web…';
     try {
-      const d = await api('/api/knowledge/wiki?query=' + encodeURIComponent(q));
-      out.innerHTML = d.results.length ? d.results.map(r => row(`<a href="${r.url}" target="_blank" style="color:var(--text)">${escapeHtml(r.title)}</a>`, escapeHtml(r.description))).join('') : '<div style="color:var(--muted)">No results.</div>';
-    } catch (e) { out.textContent = e.message; }
+      const d = await api('/api/knowledge/search-all?q=' + encodeURIComponent(q));
+      status.textContent = '';
+      out.innerHTML = d.results.length ? d.results.map(r => {
+        const label = sourceLabel[r.source] || r.source;
+        if (r.error) return row(`${label} — unavailable`, escapeHtml(r.error));
+        return row(`${label}: <a href="${r.url}" target="_blank" style="color:var(--text)">${escapeHtml(r.title)}</a>`, escapeHtml(r.description || ''));
+      }).join('') : '<div style="color:var(--muted)">No results.</div>';
+    } catch (e) { status.textContent = e.message; }
   });
   document.addEventListener('click', async (e) => {
     const del = e.target.closest('[data-know-del]');
     if (del) { try { await api('/api/knowledge/' + del.dataset.knowDel, {method:'DELETE'}); loadKnowledge(); } catch (err) { qs('#knowledgeStatus').textContent = err.message; } }
+    const original = e.target.closest('[data-know-original]');
+    if (original) { window.location.href = '/api/knowledge/' + original.dataset.knowOriginal + '/original'; }
   });
 
   // ---------- Tasks ----------
@@ -371,19 +380,7 @@
     catch (e) { status.textContent = e.message; }
   });
 
-  // ---------- Research ----------
-  qs('#researchBtn')?.addEventListener('click', async () => {
-    const q = qs('#researchQuery').value.trim();
-    const status = qs('#researchStatus');
-    const list = qs('#researchList');
-    if (!q) return;
-    status.textContent = 'Searching…'; list.innerHTML = '';
-    try {
-      const d = await api('/api/research/search?q=' + encodeURIComponent(q));
-      status.textContent = '';
-      list.innerHTML = d.results.length ? d.results.map(r => row(`<a href="${r.url}" target="_blank" style="color:var(--text)">${escapeHtml(r.title)}</a>`, escapeHtml(r.snippet))).join('') : 'No results.';
-    } catch (e) { status.textContent = e.message; }
-  });
+
 
   // ---------- System ----------
   async function loadSystem() {

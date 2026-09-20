@@ -18,6 +18,8 @@ from html.parser import HTMLParser
 from typing import Any
 
 from core.db import db
+from core import archive, jobs, ledger, storage
+from core.config import AUTO_ARCHIVE
 
 MAX_BYTES = 15 * 1024 * 1024
 MAX_TEXT = 2_000_000
@@ -123,43 +125,78 @@ def _web_text(data: bytes) -> tuple[str, str, dict[str, Any]]:
     parser.feed(data.decode("utf-8", errors="replace"))
     return parser.title[:300] or "Web page", "\n".join(parser.parts), {"title": parser.title[:300]}
 
+def _archive_bytes_if_possible(data: bytes, filename: str, mime_type: str) -> str | None:
+    """Stores raw bytes in the local hot tier and, if auto-archive is enabled
+    and a provider (Telegram/Gmail) is configured, enqueues the same real
+    background job the /upload endpoint already uses. Never raises --
+    losing the ability to archive must never break ingestion of the text."""
+    try:
+        record = storage.store_blob(data, filename=filename, mime_type=mime_type, category="knowledge")
+        providers = archive.configured_provider_names()
+        if AUTO_ARCHIVE and providers and not storage.has_archive_pointer(record.hash):
+            jobs.enqueue("archive_blob", {"blob_hash": record.hash, "providers": providers})
+        ledger.record(actor="owner", stage="REMEMBER", action="knowledge.ingest",
+                      detail={"filename": filename, "deduplicated": record.deduplicated},
+                      blob_hash=record.hash, result="ok")
+        return record.hash
+    except Exception:
+        return None
+
+
 def ingest_url(url: str) -> dict[str, Any]:
     url = _public_url(url)
     yt = _youtube_id(url)
+    blob_hash = None
     if yt:
         title, text, meta = _youtube_transcript(url)
         kind = "youtube"
     else:
         data, ctype, final_url = _fetch(url)
+        filename = final_url.rsplit("/", 1)[-1] or "source"
         if "pdf" in ctype or url.lower().split("?", 1)[0].endswith(".pdf"):
             text, meta = _pdf_text(data)
-            title = final_url.rsplit("/", 1)[-1] or "PDF document"
+            title = filename or "PDF document"
             kind = "pdf"
         elif "text/plain" in ctype:
             text = data.decode("utf-8", errors="replace")
-            title, meta, kind = (final_url.rsplit("/", 1)[-1] or "Text document"), {}, "text"
+            title, meta, kind = (filename or "Text document"), {}, "text"
+        elif ctype.startswith("image/"):
+            # No text is extracted here (no vision model call is made, so
+            # none is invented) -- the original image is still preserved
+            # and archived rather than silently discarded.
+            text, meta, kind = "", {"note": "Image ingested; no text extraction was performed."}, "image"
+            title = filename or "Image"
         else:
             title, text, meta = _web_text(data)
             kind = "web"
+        blob_hash = _archive_bytes_if_possible(data, filename, ctype or "application/octet-stream")
+
     text = text.strip()
     if not text:
-        raise ValueError("Engola could not extract readable text from that source.")
+        if kind == "image":
+            text = f"[{title}] Image ingested and archived. No text was extracted (no vision analysis was performed on it)."
+        else:
+            raise ValueError("Engola could not extract readable text from that source.")
     text = text[:MAX_TEXT]
     now = time.time()
     conn = db()
-    cur = conn.execute("INSERT INTO knowledge_sources(url,title,kind,status,metadata,text,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)", (url, title, kind, "ready", json.dumps(meta, ensure_ascii=False), text, now, now))
+    cur = conn.execute(
+        "INSERT INTO knowledge_sources(url,title,kind,status,metadata,text,created_at,updated_at,blob_hash) VALUES(?,?,?,?,?,?,?,?,?)",
+        (url, title, kind, "ready", json.dumps(meta, ensure_ascii=False), text, now, now, blob_hash),
+    )
     source_id = cur.lastrowid
     conn.commit(); conn.close()
-    return {"id": source_id, "url": url, "title": title, "kind": kind, "characters": len(text), "metadata": meta}
+    return {"id": source_id, "url": url, "title": title, "kind": kind, "characters": len(text),
+            "metadata": meta, "archived": bool(blob_hash)}
 
 def list_sources(limit: int = 50) -> list[dict[str, Any]]:
-    conn = db(); rows = conn.execute("SELECT id,url,title,kind,status,metadata,created_at,updated_at,LENGTH(text) FROM knowledge_sources ORDER BY id DESC LIMIT ?", (limit,)).fetchall(); conn.close()
-    return [{"id":r[0],"url":r[1],"title":r[2],"kind":r[3],"status":r[4],"metadata":json.loads(r[5] or "{}"),"created_at":r[6],"updated_at":r[7],"characters":r[8] or 0} for r in rows]
+    conn = db(); rows = conn.execute("SELECT id,url,title,kind,status,metadata,created_at,updated_at,LENGTH(text),blob_hash FROM knowledge_sources ORDER BY id DESC LIMIT ?", (limit,)).fetchall(); conn.close()
+    return [{"id":r[0],"url":r[1],"title":r[2],"kind":r[3],"status":r[4],"metadata":json.loads(r[5] or "{}"),"created_at":r[6],"updated_at":r[7],"characters":r[8] or 0,"has_original":bool(r[9])} for r in rows]
 
 def get_source(source_id: int) -> dict[str, Any] | None:
-    conn = db(); r = conn.execute("SELECT id,url,title,kind,status,metadata,text,created_at,updated_at FROM knowledge_sources WHERE id=?", (source_id,)).fetchone(); conn.close()
+    conn = db(); r = conn.execute("SELECT id,url,title,kind,status,metadata,text,created_at,updated_at,blob_hash FROM knowledge_sources WHERE id=?", (source_id,)).fetchone(); conn.close()
     if not r: return None
-    return {"id":r[0],"url":r[1],"title":r[2],"kind":r[3],"status":r[4],"metadata":json.loads(r[5] or "{}"),"text":r[6],"created_at":r[7],"updated_at":r[8]}
+    return {"id":r[0],"url":r[1],"title":r[2],"kind":r[3],"status":r[4],"metadata":json.loads(r[5] or "{}"),"text":r[6],"created_at":r[7],"updated_at":r[8],"blob_hash":r[9]}
 
 def search_sources(query: str, limit: int = 8) -> list[dict[str, Any]]:
     terms = [x for x in re.findall(r"[\w'-]+", (query or "").lower()) if len(x) > 2][:10]

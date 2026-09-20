@@ -22,7 +22,6 @@
 <button data-panel="voice">Voice</button>
 <button data-panel="integrations">Integrations</button>
 <button data-panel="devices">Devices</button>
-<button data-panel="research">Research</button>
 <button data-panel="system">System</button>
 <button data-panel="security">Security</button>
 <button data-panel="capabilities">Capabilities</button>
@@ -41,11 +40,11 @@
     <button class="icon-btn" style="width:auto;padding:0 16px" id="knowledgeUploadBtn">Upload</button>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-    <input id="knowledgeWikiQuery" placeholder="Search Wikipedia…" style="flex:1;min-width:220px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
-    <button class="icon-btn" style="width:auto;padding:0 16px" id="knowledgeWikiBtn">Search</button>
+    <input id="knowledgeSearchQuery" placeholder="Search everything — your vault, Wikipedia, and the web…" style="flex:1;min-width:220px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
+    <button class="icon-btn" style="width:auto;padding:0 16px" id="knowledgeSearchBtn">Search</button>
   </div>
   <div id="knowledgeStatus" style="color:var(--warm);font-size:12px;min-height:16px;margin-bottom:10px"></div>
-  <div id="knowledgeWikiResults"></div>
+  <div id="knowledgeSearchResults"></div>
   <div id="knowledgeList" style="display:grid;gap:8px"></div>
 </div>
 
@@ -122,15 +121,6 @@
   <div id="deviceList" style="display:grid;gap:8px;margin-top:10px"></div>
 </div>
 
-<div class="workspace-card" data-panel="research" style="display:none">
-  <strong>Research</strong>
-  <div style="display:flex;gap:8px;margin:12px 0">
-    <input id="researchQuery" placeholder="Search the public web…" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text)">
-    <button class="icon-btn" style="width:auto;padding:0 16px" id="researchBtn">Search</button>
-  </div>
-  <div id="researchStatus" style="color:var(--warm);font-size:12px;min-height:16px"></div>
-  <div id="researchList" style="display:grid;gap:8px"></div>
-</div>
 
 <div class="workspace-card" data-panel="system" style="display:none">
   <strong>System Status</strong>
