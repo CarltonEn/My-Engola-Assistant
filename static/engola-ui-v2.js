@@ -63,10 +63,16 @@
       if (!r.ok || !data.ok) throw new Error(data.error || 'Request failed');
       const m = addMessage('engola', data.answer || 'Done.');
       m.dataset.mode = data.mode || '';
-      if (data.mode && data.mode !== 'provider') {
+      if (data.mode === 'unavailable' && data.data && data.data.errors) {
+        const diag = document.createElement('div');
+        diag.style.cssText = 'font-size:10.5px;color:var(--dim);margin-top:6px;font-family:var(--mono);white-space:pre-wrap;border-left:2px solid var(--edge);padding-left:8px';
+        const errs = data.data.errors;
+        diag.textContent = ['openai', 'gemini', 'brave'].map(p => `${p}: ${errs[p] || '—'}`).join('\n');
+        m.querySelector('.bubble').after(diag);
+      } else if (data.mode && data.mode !== 'provider') {
         const tag = document.createElement('div');
-        tag.style.cssText = 'font-size:10px;color:var(--muted);margin-top:4px';
-        tag.textContent = data.mode === 'local' ? '⚡ answered locally, no AI call' : `via ${data.mode}`;
+        tag.style.cssText = 'font-size:10px;color:var(--dim);margin-top:4px;font-family:var(--mono)';
+        tag.textContent = data.mode === 'local' ? '⚡ local command, no AI call' : `via ${data.mode}`;
         m.querySelector('.bubble').after(tag);
       }
       setCoreState('success'); setTimeout(()=>setCoreState('idle'), 900);

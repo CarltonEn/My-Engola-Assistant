@@ -376,7 +376,7 @@ async def chat(request: Request):
         return {
             "ok": True,
             "answer": answer,
-            "mode": "local",
+            "mode": "unavailable",
             "intent": "unhandled",
             "executed": False,
             "verified": False,
