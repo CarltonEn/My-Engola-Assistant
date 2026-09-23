@@ -45,7 +45,7 @@ RECOVERY_TTL = 600
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 ENGOLA_MODEL = os.getenv("ENGOLA_MODEL", "gpt-5.6")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
 
 # Google OAuth (owner-provided; absent by default -> feature reports
 # "not configured" rather than faking success)

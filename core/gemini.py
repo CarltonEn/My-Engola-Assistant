@@ -32,7 +32,7 @@ def respond(messages, model=None) -> str:
     key = os.getenv("GEMINI_API_KEY", "").strip()
     if not key:
         raise RuntimeError("Gemini is not configured")
-    model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    model = model or os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     system = ""
     contents = []
     for m in messages:
