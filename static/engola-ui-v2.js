@@ -63,12 +63,18 @@
       if (!r.ok || !data.ok) throw new Error(data.error || 'Request failed');
       const m = addMessage('engola', data.answer || 'Done.');
       m.dataset.mode = data.mode || '';
-      if (data.mode === 'unavailable' && data.data && data.data.errors) {
+      if ((data.mode === 'unavailable' || data.mode === 'brave_search') && data.data && data.data.errors) {
         const diag = document.createElement('div');
         diag.style.cssText = 'font-size:10.5px;color:var(--dim);margin-top:6px;font-family:var(--mono);white-space:pre-wrap;border-left:2px solid var(--edge);padding-left:8px';
         const errs = data.data.errors;
         diag.textContent = ['openai', 'gemini', 'brave'].map(p => `${p}: ${errs[p] || '—'}`).join('\n');
         m.querySelector('.bubble').after(diag);
+        if (data.mode === 'brave_search') {
+          const tag = document.createElement('div');
+          tag.style.cssText = 'font-size:10px;color:var(--dim);margin-top:4px;font-family:var(--mono)';
+          tag.textContent = 'via brave_search (raw results, not synthesized)';
+          diag.after(tag);
+        }
       } else if (data.mode && data.mode !== 'provider') {
         const tag = document.createElement('div');
         tag.style.cssText = 'font-size:10px;color:var(--dim);margin-top:4px;font-family:var(--mono)';

@@ -366,7 +366,11 @@ async def chat(request: Request, background_tasks: BackgroundTasks):
                     "executed": False,
                     "verified": True,
                     "needs_approval": False,
-                    "data": {"web_grounded": True, "synthesized": False},
+                    "data": {
+                        "web_grounded": True,
+                        "synthesized": False,
+                        "errors": {"openai": primary_error, "gemini": gemini_error, "brave": brave_error},
+                    },
                 }
 
         # ---------------------------------------------------------
